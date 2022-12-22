@@ -19,7 +19,21 @@ resource "aws_vpc" "acthealth_dev" {
     "Name" = "acthealth_dev"
   }
 }
+locals {
+  bucket_name ="mytesting-cnl34"
+  env         ="ddev"
+  
+}
+resource "aws_s3_bucket" "bucket_tesst" {
+  bucket = local.bucket_name
+  acl    ="public-read-write"
 
+  tags ={
+    Name        = local.bucket_name
+    enviroment  = local.env
+  }
+  
+}
 
 #create private subnet
 resource "aws_subnet" "myprivatesubnet" {
