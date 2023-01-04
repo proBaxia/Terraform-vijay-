@@ -1,9 +1,44 @@
 #Am going to create a ec2-machine in aws and my provider is AWS
+#am adding variable i created from my terraform.tfvars
+#now i need to create a ec2-machine
+#create vpc
+#create an aws_s3_bucket
+#create private subnet
+#create public subnet
+# Creating RT for Private Subnet
+# Creating RT for Public Subnet
+#Associating the Public RT with the Public Subnets
+#Associating the Private RT with the Private Subnets
+# Create Internet Gateway resource and attach it to the VPC
+# Create EIP for the IGW
+# Create NAT Gateway resource and attach it to the VPC
+#creating security group
+
+
+
+#Am going to create a ec2-machine in aws and my provider is AWS
 
 provider "aws" {
   region = "us-east-1"
 }
-#now i need to create a ec2-machine
+
+ #am adding variable i created from my terraform.tfvars
+variable "subnet_cidr_block" {
+  description = "subnet cidr block"
+}
+variable "vpc-cidr" {
+  description = "vpc cidr"
+
+}
+variable "bucket_prefix" {
+  type    = string
+  default = "bucketobj"
+
+}
+locals {
+  bucket_name = var.bucket_prefix
+}
+#now i need to create an ec2-machine
 resource "aws_instance" "webserver" {
   ami           = "ami-0b0dcb5067f052a63"
   instance_type = "t2.micro"
@@ -14,12 +49,14 @@ resource "aws_instance" "webserver" {
 }
 #create vpc
 resource "aws_vpc" "acthealth_dev" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc-cidr
   tags = {
     "Name" = "acthealth_dev"
   }
+
 }
-locals {
+#create bucket with local variables
+/*locals {
   bucket_name ="mytesting-cnl34"
   env         ="ddev"
   
@@ -33,6 +70,15 @@ resource "aws_s3_bucket" "bucket_tesst" {
     enviroment  = local.env
   }
   
+}*/
+#create s3bhcket with variables prefix
+
+
+#create an aws_s3_bucket 
+resource "aws_s3_bucket" "tesstbucket356" {
+  bucket = local.bucket_name
+  acl    = "public-read-write"
+
 }
 
 #create private subnet
@@ -43,7 +89,7 @@ resource "aws_subnet" "myprivatesubnet" {
 #create public subnet
 resource "aws_subnet" "mypublicsubnet" {
   vpc_id     = aws_vpc.acthealth_dev.id
-  cidr_block = "10.0.1.0/24"
+  cidr_block = var.subnet_cidr_block
 }
 # Creating RT for Private Subnet
 
@@ -59,7 +105,7 @@ resource "aws_route_table" "privRT" {
 resource "aws_route_table" "publRT" {
   vpc_id = aws_vpc.acthealth_dev.id
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block = var.subnet_cidr_block
     gateway_id = aws_internet_gateway.IGW.id
   }
 }
@@ -94,7 +140,7 @@ resource "aws_nat_gateway" "NAT-GW" {
 }
 #creating security group
 resource "aws_security_group" "allow_tls" {
-  vpc_id = aws_vpc.acthealth_dev.id
+  vpc_id      = aws_vpc.acthealth_dev.id
   name        = "allow_tls"
   description = "Allow TLS inbound traffic"
 
@@ -117,6 +163,18 @@ resource "aws_security_group" "allow_tls" {
   tags = {
     Name = "allow_tls"
   }
+}
+output "vpc-id" {
+  value = "aws_vpc.acthealth_dev.id"
+  
+}
+output "publicsubnet" {
+  value = "aws_subnet.mypublicsubnet.id"
+  
+}
+output "eip-id" {
+  value = "aws_eip.myEIP.id"
+  
 }
 
 #create public subnet associate with InternetGateWay
